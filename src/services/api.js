@@ -34,4 +34,10 @@ export const dashboardService = {
   getInsights: () => api.get('/dashboard/insights'),
 };
 
+export const userService = {
+  getAll: () => api.get('/auth/users'),
+  update: (id, data) => api.put(`/auth/users/${id}`, data),
+};
+
 export default api;
+

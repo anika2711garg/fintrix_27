@@ -1,20 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { dashboardService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { TrendingUp, TrendingDown, Wallet, Clock, Tag, Plus, LogOut } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Plus, Loader2, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from 'recharts';
+import AddRecordModal from '../components/AddRecordModal';
+
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const PIE_COLORS = ['#7c3aed', '#2563eb', '#059669', '#d97706', '#dc2626', '#0891b2', '#7c3aed', '#16a34a'];
+
+const StatCard = ({ title, amount, icon, trend }) => (
+  <motion.div
+    whileHover={{ y: -4 }}
+    transition={{ type: 'spring', stiffness: 300 }}
+    className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 hover:border-white/20 transition-colors"
+  >
+    <div className="flex justify-between items-start mb-4">
+      <div className="p-2.5 bg-white/5 rounded-xl border border-white/5">{icon}</div>
+      <p className="text-xs font-medium text-white/40 uppercase tracking-wider">{title}</p>
+    </div>
+    <p className="text-3xl font-bold text-white">${(amount ?? 0).toLocaleString()}</p>
+  </motion.div>
+);
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload?.length) {
+    return (
+      <div className="bg-[#0d0d10] border border-white/10 rounded-xl p-3 text-xs shadow-xl">
+        <p className="text-white/60 mb-1.5">{label}</p>
+        {payload.map((p) => (
+          <p key={p.dataKey} style={{ color: p.color }}>
+            {p.name}: ${p.value?.toLocaleString()}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
   const [insights, setInsights] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingInsights, setLoadingInsights] = useState(false);
-  const { user, logout } = useAuth();
-
-  useEffect(() => {
-    fetchDashboard();
-    if (user?.role !== 'Viewer') fetchInsights();
-  }, []);
+  const [addOpen, setAddOpen] = useState(false);
+  const { user } = useAuth();
 
   const fetchDashboard = async () => {
     try {
@@ -39,135 +73,207 @@ const Dashboard = () => {
     }
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center text-white">Loading...</div>;
+  useEffect(() => {
+    fetchDashboard();
+    if (user?.role !== 'Viewer') fetchInsights();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 size={36} className="animate-spin text-violet-400" />
+      </div>
+    );
+  }
+
+  const summary = data?.summary || { totalIncome: 0, totalExpenses: 0, netBalance: 0 };
+  const recentTx = data?.recentTransactions || [];
+
+  // Build chart data from insights (passed via API)
+  const monthlyData = (insights?.monthlyTrends || []).map((m) => ({
+    name: MONTH_NAMES[m._id.month - 1],
+    Income: m.income,
+    Expense: m.expense,
+  }));
+
+  const categoryData = (insights?.categoryBreakdown || []).slice(0, 6).map((c) => ({
+    name: c._id,
+    value: c.total,
+  }));
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-white p-4 md:p-8 space-y-8">
-      {/* Header remain unchanged */}
-      <header className="flex justify-between items-center bg-white/5 p-4 rounded-xl border border-white/10">
-        <div>
-          <h1 className="text-2xl font-bold">Hello, {user?.name}</h1>
-          <p className="text-white/60 text-sm">Role: <span className="text-primary">{user?.role}</span></p>
-        </div>
-        <button onClick={logout} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-danger">
-          <LogOut size={24} />
-        </button>
-      </header>
+    <div className="space-y-8">
+      <AddRecordModal
+        isOpen={addOpen}
+        onClose={() => setAddOpen(false)}
+        onSuccess={fetchDashboard}
+      />
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard 
-          title="Total Income" 
-          amount={data?.summary.totalIncome} 
-          icon={<TrendingUp className="text-success" />} 
-          color="success"
-        />
-        <StatCard 
-          title="Total Expenses" 
-          amount={data?.summary.totalExpenses} 
-          icon={<TrendingDown className="text-danger" />} 
-          color="danger"
-        />
-        <StatCard 
-          title="Net Balance" 
-          amount={data?.summary.netBalance} 
-          icon={<Wallet className="text-primary" />} 
-          color="primary"
-        />
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">
+            Welcome back, <span className="text-violet-400">{user?.name?.split(' ')[0]}</span>
+          </h1>
+          <p className="text-sm text-white/40 mt-0.5">
+            Role: <span className="text-white/60 font-medium">{user?.role}</span>
+          </p>
+        </div>
+        {user?.role !== 'Viewer' && (
+          <button
+            onClick={() => setAddOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl text-sm font-semibold text-white transition-colors shadow-lg shadow-violet-500/20"
+          >
+            <Plus size={18} /> Add Record
+          </button>
+        )}
       </div>
 
-      {/* AI Insights Section */}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <StatCard title="Total Income" amount={summary.totalIncome} icon={<TrendingUp size={18} className="text-emerald-400" />} />
+        <StatCard title="Total Expenses" amount={summary.totalExpenses} icon={<TrendingDown size={18} className="text-red-400" />} />
+        <StatCard title="Net Balance" amount={summary.netBalance} icon={<Wallet size={18} className="text-violet-400" />} />
+      </div>
+
+      {/* Charts (Analyst/Admin only) */}
       {user?.role !== 'Viewer' && (
-        <section className="space-y-4">
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <span className="bg-primary/20 p-2 rounded-lg"><TrendingUp size={20} className="text-primary" /></span>
-            AI Financial Insights
-          </h2>
-          <div className="glass p-6 rounded-2xl border border-primary/20 bg-primary/5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Area Chart */}
+          <div className="lg:col-span-2 bg-white/[0.03] border border-white/10 rounded-2xl p-5">
+            <h2 className="text-sm font-semibold text-white/70 mb-5">Monthly Trends</h2>
             {loadingInsights ? (
-              <div className="flex items-center gap-3 text-white/60 animate-pulse">
-                <Loader2 className="animate-spin" /> Analyzing your financial patterns...
+              <div className="flex items-center justify-center h-40">
+                <Loader2 size={24} className="animate-spin text-violet-400" />
               </div>
-            ) : insights ? (
-              <div className="prose prose-invert max-w-none prose-sm text-white/80 leading-relaxed">
-                {insights.split('\n').map((line, i) => (
-                  <p key={i}>{line}</p>
-                ))}
-              </div>
+            ) : monthlyData.length === 0 ? (
+              <div className="flex items-center justify-center h-40 text-white/20 text-sm">No data yet</div>
             ) : (
-              <p className="text-white/40 italic">Unable to generate insights at this time.</p>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={monthlyData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area type="monotone" dataKey="Income" stroke="#7c3aed" strokeWidth={2} fill="url(#incomeGrad)" />
+                  <Area type="monotone" dataKey="Expense" stroke="#ef4444" strokeWidth={2} fill="url(#expenseGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
             )}
           </div>
-        </section>
+
+          {/* Pie Chart */}
+          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5">
+            <h2 className="text-sm font-semibold text-white/70 mb-5">Category Breakdown</h2>
+            {loadingInsights ? (
+              <div className="flex items-center justify-center h-40">
+                <Loader2 size={24} className="animate-spin text-violet-400" />
+              </div>
+            ) : categoryData.length === 0 ? (
+              <div className="flex items-center justify-center h-40 text-white/20 text-sm">No data yet</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={categoryData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value">
+                    {categoryData.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0d0d10', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px', color: 'white' }}
+                    formatter={(v) => [`$${v.toLocaleString()}`, '']}
+                  />
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    formatter={(v) => <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>{v}</span>}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
       )}
 
-      {/* Recent Transactions remain unchanged */}
-      <section className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold">Recent Activity</h2>
-          {user?.role !== 'Viewer' && (
-            <button className="bg-primary hover:bg-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-              <Plus size={18} /> Add Record
-            </button>
+      {/* AI Insights (Analyst/Admin) */}
+      {user?.role !== 'Viewer' && (
+        <div className="bg-violet-500/5 border border-violet-500/20 rounded-2xl p-5">
+          <h2 className="text-sm font-semibold text-violet-300 mb-3 flex items-center gap-2">
+            <TrendingUp size={15} /> AI Financial Insights
+          </h2>
+          {loadingInsights ? (
+            <div className="flex items-center gap-2 text-white/30 text-sm animate-pulse">
+              <Loader2 size={14} className="animate-spin" /> Analyzing patterns...
+            </div>
+          ) : insights?.insight ? (
+            <div className="text-sm text-white/60 leading-relaxed whitespace-pre-line">{insights.insight}</div>
+          ) : typeof insights === 'string' ? (
+            <div className="text-sm text-white/60 leading-relaxed whitespace-pre-line">{insights}</div>
+          ) : (
+            <p className="text-sm text-white/30 italic">Add more records to generate insights.</p>
           )}
         </div>
-        
-        {/* Table JSX code follows ... */}
+      )}
 
-        <div className="glass rounded-2xl overflow-hidden border border-white/10">
-          <table className="w-full text-left">
-            <thead className="bg-white/5 border-b border-white/10">
-              <tr>
-                <th className="p-4 text-xs font-semibold uppercase tracking-wider text-white/50">Date</th>
-                <th className="p-4 text-xs font-semibold uppercase tracking-wider text-white/50">Category</th>
-                <th className="p-4 text-xs font-semibold uppercase tracking-wider text-white/50">Type</th>
-                <th className="p-4 text-xs font-semibold uppercase tracking-wider text-white/50 text-right">Amount</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {data?.recentTransactions.map((tx) => (
-                <tr key={tx._id} className="hover:bg-white/5 transition-colors">
-                  <td className="p-4 flex items-center gap-2 text-sm">
-                    <Clock size={14} className="text-white/40" />
-                    {new Date(tx.date).toLocaleDateString()}
-                  </td>
-                  <td className="p-4 text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <Tag size={14} className="text-primary/70" />
-                      {tx.category}
-                    </div>
-                  </td>
-                  <td className="p-4 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-[10px] uppercase font-bold ${tx.type === 'income' ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>
-                      {tx.type}
-                    </span>
-                  </td>
-                  <td className={`p-4 text-sm font-bold text-right ${tx.type === 'income' ? 'text-success' : 'text-danger'}`}>
-                    {tx.type === 'income' ? '+' : '-'}${tx.amount.toLocaleString()}
-                  </td>
+      {/* Recent Transactions */}
+      <div className="space-y-4">
+        <h2 className="text-base font-semibold text-white/80">Recent Activity</h2>
+        <div className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden">
+          {recentTx.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center">
+                <FileText size={20} className="text-white/20" />
+              </div>
+              <p className="text-white/30 text-sm">No transactions yet</p>
+              {user?.role !== 'Viewer' && (
+                <button onClick={() => setAddOpen(true)} className="text-xs text-violet-400 hover:underline">
+                  Add your first record
+                </button>
+              )}
+            </div>
+          ) : (
+            <table className="w-full text-left">
+              <thead className="border-b border-white/10">
+                <tr>
+                  {['Date', 'Category', 'Type', 'Amount'].map((h) => (
+                    <th key={h} className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-white/30">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {recentTx.map((tx) => (
+                  <tr key={tx._id} className="hover:bg-white/[0.03] transition-colors">
+                    <td className="px-5 py-3.5 text-sm text-white/50">
+                      {new Date(tx.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="px-5 py-3.5 text-sm font-medium text-white/80">{tx.category}</td>
+                    <td className="px-5 py-3.5">
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${tx.type === 'income' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                        {tx.type}
+                      </span>
+                    </td>
+                    <td className={`px-5 py-3.5 text-sm font-bold ${tx.type === 'income' ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {tx.type === 'income' ? '+' : '-'}${tx.amount.toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
-      </section>
+      </div>
     </div>
   );
 };
-
-const StatCard = ({ title, amount, icon, color }) => (
-  <motion.div 
-    whileHover={{ y: -5 }}
-    className="glass p-6 rounded-2xl border border-white/10 space-y-4"
-  >
-    <div className="flex justify-between items-start">
-      <div className="p-3 bg-white/5 rounded-xl border border-white/5">{icon}</div>
-      <p className="text-sm font-medium text-white/50">{title}</p>
-    </div>
-    <div className="space-y-1">
-      <p className="text-3xl font-bold">${amount?.toLocaleString()}</p>
-    </div>
-  </motion.div>
-);
 
 export default Dashboard;

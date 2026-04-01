@@ -69,3 +69,37 @@ const sendTokenResponse = (user, statusCode, res) => {
     data: user,
   });
 };
+
+// @desc    Get all users
+// @route   GET /api/auth/users
+// @access  Private (Admin)
+exports.getUsers = catchAsync(async (req, res, next) => {
+  const users = await User.find();
+  res.status(200).json({ success: true, count: users.length, data: users });
+});
+
+// @desc    Update user role or status
+// @route   PUT /api/auth/users/:id
+// @access  Private (Admin)
+exports.updateUser = catchAsync(async (req, res, next) => {
+  const { role, status } = req.body;
+
+  // Prevent admin from modifying themselves
+  if (req.params.id === req.user.id.toString()) {
+    return next(new AppError('You cannot modify your own account via this route', 400));
+  }
+
+  const fieldsToUpdate = {};
+  if (role) fieldsToUpdate.role = role;
+  if (status) fieldsToUpdate.status = status;
+
+  const user = await User.findByIdAndUpdate(req.params.id, fieldsToUpdate, {
+    new: true,
+    runValidators: true,
+  });
+
+  if (!user) return next(new AppError('User not found', 404));
+
+  res.status(200).json({ success: true, data: user });
+});
+

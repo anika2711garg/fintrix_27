@@ -35,6 +35,15 @@ exports.getAllRecords = async (query) => {
 };
 
 /**
+ * @desc    Get a single financial record by ID.
+ */
+exports.getRecordById = async (id) => {
+  const record = await FinancialRecord.findById(id).populate('createdBy', 'name email');
+  if (!record) throw new AppError('Record not found', 404);
+  return record;
+};
+
+/**
  * @desc    Create a new financial record.
  */
 exports.createRecord = async (data, user) => {

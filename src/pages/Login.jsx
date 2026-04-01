@@ -23,7 +23,7 @@ const Login = () => {
         ? await authService.login({ email: formData.email, password: formData.password })
         : await authService.register(formData);
       
-      login(res.data.user, res.data.token);
+      login(res.data.data, res.data.token);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong');
@@ -90,9 +90,9 @@ const Login = () => {
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               >
-                <option value="Viewer">Viewer (Read Only)</option>
-                <option value="Analyst">Analyst (Read + Insights)</option>
-                <option value="Admin">Admin (Full Access)</option>
+                <option className="bg-[#09090b]" value="Viewer">Viewer (Read Only)</option>
+                <option className="bg-[#09090b]" value="Analyst">Analyst (Read + Insights)</option>
+                <option className="bg-[#09090b]" value="Admin">Admin (Full Access)</option>
               </select>
             </div>
           )}

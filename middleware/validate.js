@@ -22,7 +22,11 @@ module.exports = (schema) => (req, res, next) => {
   } catch (error) {
     let message = 'Validation Error';
     if (error instanceof z.ZodError) {
-      message = error.errors.map((err) => `${err.path.join('.')}: ${err.message}`).join(', ');
+      if (error.issues && Array.isArray(error.issues)) {
+        message = error.issues.map((err) => `${err.path.join('.')}: ${err.message}`).join(', ');
+      } else if (error.errors && Array.isArray(error.errors)) {
+        message = error.errors.map((err) => `${err.path.join('.')}: ${err.message}`).join(', ');
+      }
     } else if (error.errors && Array.isArray(error.errors)) {
        message = error.errors.map((err) => `${err.path?.join('.') || 'field'}: ${err.message}`).join(', ');
     } else if (error.message) {
