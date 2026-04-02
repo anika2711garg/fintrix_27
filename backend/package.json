@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
+    "build": "echo backend build step not required",
     "dev": "nodemon server.js",
     "start": "node server.js",
     "test": "jest"
