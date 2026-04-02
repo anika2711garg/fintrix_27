@@ -11,11 +11,26 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 // Body parser
 app.use(express.json());
 
 // Enable CORS
-app.use(cors());
+app.use(cors({
+  origin(origin, callback) {
+    // Allow non-browser requests and local dev origins by default.
+    if (!origin) return callback(null, true);
+    if (origin.includes('localhost')) return callback(null, true);
+    if (allowedOrigins.length === 0) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
 
 // Set security headers
 app.use(helmet());

@@ -152,6 +152,14 @@ MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRE=24h
 NODE_ENV=development
+
+# Frontend deployment (Vercel)
+# Example: https://your-backend-domain.com
+VITE_API_BASE_URL=your_backend_base_url
+
+# Backend CORS allowlist (comma separated)
+# Example: https://your-frontend.vercel.app,https://your-custom-domain.com
+CORS_ORIGIN=your_frontend_origin
 ```
 
 ### Run
@@ -168,6 +176,30 @@ npm run build
 
 ## Notes
 - Frontend and backend are integrated through the `/api` proxy setup in Vite for local development.
+- In production (Vercel), set `VITE_API_BASE_URL` in Vercel environment variables so signup/login calls reach your live backend.
 - Soft delete is used instead of hard delete for audit safety.
 - Service layer keeps controllers slim and testable.
 - Validation is performed before controller execution for predictable API errors.
+
+## One-Go Vercel Deployment (Frontend + Backend)
+
+This repository is configured for a single Vercel project deployment:
+- React frontend is served from static build output (`dist`).
+- Express backend runs as a Vercel serverless function via `api/index.js`.
+- API routes (`/api/*`) and docs (`/api-docs`) are routed to the backend function.
+
+### Steps
+1. Import this repository into Vercel as one project.
+2. Add environment variables in Vercel Project Settings:
+    - `MONGODB_URI`
+    - `JWT_SECRET`
+    - `JWT_EXPIRE`
+    - `NODE_ENV=production`
+    - `CORS_ORIGIN=https://your-project.vercel.app`
+    - `VITE_API_BASE_URL=https://your-project.vercel.app`
+3. Deploy.
+
+After deploy:
+- Frontend: `https://your-project.vercel.app`
+- Backend API: `https://your-project.vercel.app/api/...`
+- Swagger: `https://your-project.vercel.app/api-docs`

@@ -41,7 +41,11 @@ const Login = () => {
       login(res.data.data, res.data.token);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong');
+      if (!err.response) {
+        setError('Unable to reach backend API. Check deployed API URL configuration.');
+      } else {
+        setError(err.response?.data?.message || 'Something went wrong');
+      }
     } finally {
       setLoading(false);
     }
