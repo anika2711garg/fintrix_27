@@ -1,4 +1,5 @@
 const dashboardService = require('../services/dashboardService');
+const aiService = require('../services/aiService');
 const catchAsync = require('../utils/catchAsync');
 
 // @desc    Get dashboard summary
@@ -21,6 +22,8 @@ exports.getInsights = catchAsync(async (req, res, next) => {
     dashboardService.getAdvancedInsights(req.user),
   ]);
 
+  const summary = await dashboardService.getSummary(req.user);
+
   let insight = 'Financial insight:\n';
   if (categoryBreakdown.length > 0) {
     insight += `Top spending category: ${categoryBreakdown[0]._id} (${categoryBreakdown[0].total.toFixed(2)}). `;
@@ -29,6 +32,28 @@ exports.getInsights = catchAsync(async (req, res, next) => {
     insight += `Income/Expense ratio: ${advanced.incomeExpenseRatio}. `;
   }
   insight += `Average transaction value: ${advanced.averageTransactionValue}.`;
+
+  const categoryTotals = categoryBreakdown.map((row) => ({
+    category: row._id,
+    total: row.total,
+  }));
+
+  if (process.env.GROQ_API_KEY) {
+    try {
+      const aiInsight = await aiService.getFinancialInsights({
+        totalIncome: summary.totalIncome,
+        totalExpenses: summary.totalExpenses,
+        netBalance: summary.netBalance,
+        categoryTotals,
+      });
+
+      if (aiInsight && typeof aiInsight === 'string') {
+        insight = aiInsight;
+      }
+    } catch (error) {
+      // Keep deterministic insight response if AI provider fails.
+    }
+  }
 
   res.status(200).json({
     success: true,

@@ -11,6 +11,7 @@ Production-ready Finance Data Processing and Access Control backend built with N
 - Soft delete + trash + restore for records
 - Dashboard analytics using MongoDB aggregations
 - Advanced analytics (ratio, top categories, weekly vs monthly, average value)
+- Optional AI-generated financial insight (Groq) with safe fallback summary
 - Audit logging for critical actions
 - Rate limiting, validation, centralized error handling
 - Swagger API documentation
@@ -42,6 +43,7 @@ backend/
     dashboardRoutes.js
     recordRoutes.js
   services/
+    aiService.js
     auditService.js
     authService.js
     dashboardService.js
@@ -76,6 +78,7 @@ JWT_REFRESH_EXPIRE_DAYS=7
 NODE_ENV=development
 PUBLIC_API_URL=http://localhost:5000
 CORS_ORIGIN=http://localhost:5173
+GROQ_API_KEY=optional_groq_api_key
 ```
 
 ## Run Locally

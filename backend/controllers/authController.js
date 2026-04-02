@@ -3,6 +3,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
 const authService = require('../services/authService');
 const auditService = require('../services/auditService');
+const userService = require('../services/userService');
 
 const buildAuthResponse = async ({ user, statusCode, res, req, action }) => {
   const accessToken = authService.signAccessToken(user);
@@ -41,12 +42,12 @@ const buildAuthResponse = async ({ user, statusCode, res, req, action }) => {
 exports.register = catchAsync(async (req, res, next) => {
   const { name, email, password, role } = req.body;
 
-  const existing = await User.findOne({ email });
+  const existing = await userService.findByEmail(email);
   if (existing) {
     return next(new AppError('User already exists with this email', 409));
   }
 
-  const user = await User.create({
+  const user = await userService.createUser({
     name,
     email,
     password,
@@ -62,12 +63,12 @@ exports.register = catchAsync(async (req, res, next) => {
 exports.createUser = catchAsync(async (req, res, next) => {
   const { name, email, password, role, status } = req.body;
 
-  const existing = await User.findOne({ email }).setOptions({ includeDeleted: true });
+  const existing = await userService.findByEmail(email, { includeDeleted: true });
   if (existing) {
     return next(new AppError('User already exists with this email', 409));
   }
 
-  const user = await User.create({
+  const user = await userService.createUser({
     name,
     email,
     password,
@@ -189,7 +190,7 @@ exports.logoutAll = catchAsync(async (req, res, next) => {
 // @route   GET /api/auth/me
 // @access  Private
 exports.getMe = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.user.id);
+  const user = await userService.getUserById(req.user.id);
   res.status(200).json({ success: true, data: user });
 });
 
@@ -197,37 +198,15 @@ exports.getMe = catchAsync(async (req, res, next) => {
 // @route   GET /api/auth/users
 // @access  Private (Admin)
 exports.getUsers = catchAsync(async (req, res, next) => {
-  const {
-    role,
-    status,
-    search,
-    page = 1,
-    limit = 10,
-  } = req.query;
-
-  const filter = {};
-  if (role) filter.role = role;
-  if (status) filter.status = status;
-  if (search) {
-    filter.$or = [
-      { name: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
-    ];
-  }
-
-  const total = await User.countDocuments(filter);
-  const users = await User.find(filter)
-    .sort('-createdAt')
-    .skip((Number(page) - 1) * Number(limit))
-    .limit(Number(limit));
+  const result = await userService.getAllUsers(req.query);
 
   res.status(200).json({
     success: true,
-    total,
-    page: Number(page),
-    pages: Math.ceil(total / Number(limit)),
-    count: users.length,
-    data: users,
+    total: result.total,
+    page: result.page,
+    pages: result.pages,
+    count: result.count,
+    data: result.users,
   });
 });
 
@@ -245,10 +224,7 @@ exports.updateUser = catchAsync(async (req, res, next) => {
   if (role) fieldsToUpdate.role = role;
   if (status) fieldsToUpdate.status = status;
 
-  const user = await User.findByIdAndUpdate(req.params.id, fieldsToUpdate, {
-    new: true,
-    runValidators: true,
-  });
+  const user = await userService.updateUser(req.params.id, fieldsToUpdate);
 
   if (!user) return next(new AppError('User not found', 404));
 
@@ -273,9 +249,7 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     return next(new AppError('You cannot delete your own account via this route', 400));
   }
 
-  const user = await User.findByIdAndUpdate(req.params.id, { isDeleted: true }, {
-    new: true,
-  });
+  const user = await userService.deleteUser(req.params.id);
 
   if (!user) return next(new AppError('User not found', 404));
 
