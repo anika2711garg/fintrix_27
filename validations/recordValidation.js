@@ -13,16 +13,23 @@ const createRecordSchema = z.object({
 const getRecordsSchema = z.object({
   query: z.object({
     type: z.enum(['income', 'expense']).optional(),
-    category: z.string().optional(),
+    category: z.string().trim().min(1).max(60).optional(),
     startDate: z.string().optional(),
     endDate: z.string().optional(),
-    page: z.string().optional(),
-    limit: z.string().optional(),
-    search: z.string().optional(),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(10),
+    search: z.string().trim().min(1).max(80).optional(),
+  }),
+});
+
+const recordIdParamSchema = z.object({
+  params: z.object({
+    id: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid record id'),
   }),
 });
 
 module.exports = {
   createRecordSchema,
   getRecordsSchema,
+  recordIdParamSchema,
 };

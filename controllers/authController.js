@@ -74,8 +74,38 @@ const sendTokenResponse = (user, statusCode, res) => {
 // @route   GET /api/auth/users
 // @access  Private (Admin)
 exports.getUsers = catchAsync(async (req, res, next) => {
-  const users = await User.find();
-  res.status(200).json({ success: true, count: users.length, data: users });
+  const {
+    role,
+    status,
+    search,
+    page = 1,
+    limit = 10,
+  } = req.query;
+
+  const filter = {};
+  if (role) filter.role = role;
+  if (status) filter.status = status;
+  if (search) {
+    filter.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+    ];
+  }
+
+  const total = await User.countDocuments(filter);
+  const users = await User.find(filter)
+    .sort('-createdAt')
+    .skip((Number(page) - 1) * Number(limit))
+    .limit(Number(limit));
+
+  res.status(200).json({
+    success: true,
+    total,
+    page: Number(page),
+    pages: Math.ceil(total / Number(limit)),
+    count: users.length,
+    data: users,
+  });
 });
 
 // @desc    Update user role or status
@@ -101,5 +131,23 @@ exports.updateUser = catchAsync(async (req, res, next) => {
   if (!user) return next(new AppError('User not found', 404));
 
   res.status(200).json({ success: true, data: user });
+});
+
+// @desc    Soft delete user
+// @route   DELETE /api/auth/users/:id
+// @access  Private (Admin)
+exports.deleteUser = catchAsync(async (req, res, next) => {
+  // Prevent admin from deleting themselves
+  if (req.params.id === req.user.id.toString()) {
+    return next(new AppError('You cannot delete your own account via this route', 400));
+  }
+
+  const user = await User.findByIdAndUpdate(req.params.id, { isDeleted: true }, {
+    new: true,
+  });
+
+  if (!user) return next(new AppError('User not found', 404));
+
+  res.status(200).json({ success: true, data: {} });
 });
 

@@ -1,23 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --bg: #f5f6ef;
+    --bg-soft: #ebece2;
+    --surface: rgba(255, 255, 255, 0.76);
+    --surface-strong: rgba(255, 255, 255, 0.92);
+    --ink: #16211b;
+    --ink-muted: #55665e;
+    --brand: #0b8f77;
+    --brand-2: #f08a4b;
+    --danger: #d93036;
+    --success: #118a4e;
+    --line: rgba(15, 45, 35, 0.14);
+    --shell-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.7));
+    --app-bg:
+      radial-gradient(circle at 10% -10%, rgba(11, 143, 119, 0.18), transparent 40%),
+      radial-gradient(circle at 85% 8%, rgba(240, 138, 75, 0.23), transparent 34%),
+      radial-gradient(circle at 50% 120%, rgba(26, 120, 195, 0.12), transparent 45%),
+      linear-gradient(170deg, #f7f8f2 0%, #eef0e8 46%, #f8f7f1 100%);
+    --field-bg: rgba(255, 255, 255, 0.8);
+    --field-bg-focus: rgba(255, 255, 255, 0.96);
+    --field-placeholder: #819288;
+    --glass-soft: rgba(255, 255, 255, 0.58);
+  }
+
+  [data-theme='dark'] {
+    --bg: #0f1412;
+    --bg-soft: #121b17;
+    --surface: rgba(21, 30, 26, 0.86);
+    --surface-strong: rgba(24, 34, 29, 0.94);
+    --ink: #e7f2ec;
+    --ink-muted: #9eb2a8;
+    --line: rgba(193, 226, 210, 0.16);
+    --shell-bg: linear-gradient(145deg, rgba(17, 25, 21, 0.94), rgba(13, 19, 16, 0.88));
+    --app-bg:
+      radial-gradient(circle at 12% -8%, rgba(11, 143, 119, 0.22), transparent 40%),
+      radial-gradient(circle at 90% 6%, rgba(240, 138, 75, 0.2), transparent 30%),
+      radial-gradient(circle at 55% 115%, rgba(39, 100, 168, 0.2), transparent 45%),
+      linear-gradient(170deg, #0e1412 0%, #0f1814 48%, #0c120f 100%);
+    --field-bg: rgba(255, 255, 255, 0.08);
+    --field-bg-focus: rgba(255, 255, 255, 0.11);
+    --field-placeholder: #90a9a0;
+    --glass-soft: rgba(19, 27, 23, 0.62);
+  }
+
+  * {
+    @apply box-border;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply m-0 min-h-screen;
+    font-family: 'Manrope', sans-serif;
+    color: var(--ink);
+    background: var(--app-bg);
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Fraunces', serif;
+    letter-spacing: -0.02em;
+    color: var(--ink);
   }
 }
 
-.glass {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+@layer components {
+  .app-shell {
+    @apply rounded-[30px] border shadow-2xl;
+    border-color: var(--line);
+    background: var(--shell-bg);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 22px 60px -40px rgba(11, 48, 38, 0.55);
+  }
+
+  .panel {
+    @apply rounded-2xl border;
+    border-color: var(--line);
+    background: var(--surface);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 14px 30px -32px rgba(12, 52, 41, 0.52);
+  }
+
+  .panel-strong {
+    @apply rounded-2xl border;
+    border-color: var(--line);
+    background: var(--surface-strong);
+    box-shadow: 0 22px 44px -36px rgba(12, 52, 41, 0.6);
+  }
+
+  .panel-lift {
+    @apply transition-all;
+  }
+
+  .panel-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 24px 42px -32px rgba(12, 52, 41, 0.56);
+  }
+
+  .btn-primary {
+    @apply rounded-2xl px-4 py-2.5 font-semibold text-white transition-all;
+    background: linear-gradient(135deg, var(--brand), #0a7765 70%);
+    box-shadow: 0 16px 28px -22px rgba(5, 95, 79, 0.92);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    filter: saturate(1.06);
+  }
+
+  .btn-secondary {
+    @apply rounded-2xl border px-4 py-2.5 font-semibold transition-colors;
+    border-color: var(--line);
+    color: var(--ink);
+    background: var(--glass-soft);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.85);
+  }
+
+  .field {
+    @apply w-full rounded-2xl border px-3.5 py-2.5 text-sm outline-none transition;
+    border-color: var(--line);
+    background: var(--field-bg);
+    color: var(--ink);
+  }
+
+  .field::placeholder {
+    color: var(--field-placeholder);
+  }
+
+  .field:focus {
+    border-color: rgba(11, 143, 119, 0.45);
+    box-shadow: 0 0 0 3px rgba(11, 143, 119, 0.15);
+    background: var(--field-bg-focus);
+  }
+
+  .text-muted {
+    color: var(--ink-muted);
+  }
 }
 
-input, select {
-  @apply bg-white/5 border border-white/10 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all;
+input,
+select,
+textarea,
+button {
+  font-family: 'Manrope', sans-serif;
 }
 
 button {
-  @apply transition-all active:scale-95;
+  @apply transition-all active:scale-[0.99];
 }

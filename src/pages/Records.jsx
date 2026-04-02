@@ -1,12 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { recordService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Search, Filter, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Loader2, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AddRecordModal from '../components/AddRecordModal';
 import EditRecordModal from '../components/EditRecordModal';
 
 const CATEGORIES = ['All', 'Salary', 'Freelance', 'Food', 'Transport', 'Shopping', 'Utilities', 'Health', 'Entertainment', 'Education', 'Investment', 'Other'];
+
+const listStagger = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.03,
+    },
+  },
+};
+
+const rowReveal = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.25 } },
+};
 
 const Records = () => {
   const { user } = useAuth();
@@ -19,6 +34,7 @@ const Records = () => {
   const [editRecord, setEditRecord] = useState(null);
   const [filters, setFilters] = useState({ type: '', category: '', search: '' });
   const [deleting, setDeleting] = useState(null);
+  const [compact, setCompact] = useState(false);
 
   const fetchRecords = useCallback(async () => {
     setLoading(true);
@@ -65,69 +81,79 @@ const Records = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Financial Records</h1>
-          <p className="text-sm text-white/40 mt-0.5">{total} total records</p>
+          <p className="text-xs uppercase tracking-[0.22em] text-muted mb-2">Records</p>
+          <h1 className="text-3xl font-bold">Financial Records</h1>
+          <p className="text-sm text-muted mt-0.5">{total} total records</p>
         </div>
-        {canWrite && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setAddOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl text-sm font-semibold text-white transition-colors shadow-lg shadow-violet-500/20"
+            onClick={() => setCompact((v) => !v)}
+            className="btn-secondary text-sm"
           >
-            <Plus size={18} /> Add Record
+            {compact ? 'Comfort View' : 'Dense View'}
           </button>
-        )}
+          {canWrite && (
+            <button
+              onClick={() => setAddOpen(true)}
+              className="btn-primary flex items-center gap-2 text-sm"
+            >
+              <Plus size={18} /> Add Record
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
             type="text"
             placeholder="Search description..."
-            className="w-full pl-9 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-sm text-white placeholder-white/30 focus:outline-none focus:border-violet-500/50"
+            className="field pl-9"
             value={filters.search}
             onChange={(e) => { setFilters({ ...filters, search: e.target.value }); setPage(1); }}
           />
         </div>
         <div className="flex gap-2">
           <select
-            className="px-3 py-2.5 bg-[#0d0d10] border border-white/10 rounded-xl text-sm text-white/70 focus:outline-none focus:border-violet-500/50"
+            className="field"
             value={filters.type}
             onChange={(e) => { setFilters({ ...filters, type: e.target.value }); setPage(1); }}
           >
-            <option className="bg-[#09090b]" value="">All Types</option>
-            <option className="bg-[#09090b]" value="income">Income</option>
-            <option className="bg-[#09090b]" value="expense">Expense</option>
+            <option value="">All Types</option>
+            <option value="income">Income</option>
+            <option value="expense">Expense</option>
           </select>
           <select
-            className="px-3 py-2.5 bg-[#0d0d10] border border-white/10 rounded-xl text-sm text-white/70 focus:outline-none focus:border-violet-500/50"
+            className="field"
             value={filters.category}
             onChange={(e) => { setFilters({ ...filters, category: e.target.value }); setPage(1); }}
           >
             {CATEGORIES.map((c) => (
-              <option key={c} className="bg-[#09090b]" value={c}>{c}</option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden">
+      <div className="panel panel-lift overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={28} className="animate-spin text-violet-400" />
+            <Loader2 size={28} className="animate-spin" color="#0b8f77" />
           </div>
         ) : records.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center">
-              <FileText size={24} className="text-white/20" />
+            <div className="w-14 h-14 rounded-2xl bg-white/75 border flex items-center justify-center" style={{ borderColor: 'var(--line)' }}>
+              <FileText size={24} className="text-muted" />
             </div>
-            <p className="text-white/30 text-sm">No records found</p>
+            <p className="text-muted text-sm">No records found</p>
             {canWrite && (
               <button
                 onClick={() => setAddOpen(true)}
-                className="text-xs text-violet-400 hover:underline"
+                className="text-xs hover:underline"
+                style={{ color: 'var(--brand)' }}
               >
                 Add your first record
               </button>
@@ -137,51 +163,54 @@ const Records = () => {
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
-                <thead className="border-b border-white/10">
+                <thead className="border-b" style={{ borderColor: 'var(--line)' }}>
                   <tr>
                     {['Date', 'Category', 'Type', 'Amount', 'Description', ...(canAdmin ? ['Actions'] : [])].map((h) => (
-                      <th key={h} className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-white/30">{h}</th>
+                      <th key={h} className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'} text-xs font-semibold uppercase tracking-wider text-muted`}>{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <motion.tbody
+                  className="divide-y"
+                  style={{ borderColor: 'rgba(15,45,35,0.08)' }}
+                  variants={listStagger}
+                  initial="hidden"
+                  animate="visible"
+                >
                   {records.map((rec) => (
-                    <motion.tr
-                      key={rec._id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="hover:bg-white/[0.03] transition-colors"
-                    >
-                      <td className="px-5 py-3.5 text-sm text-white/60">
+                    <motion.tr key={rec._id} variants={rowReveal} className="hover:bg-white/70 transition-colors">
+                      <td className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'} text-sm text-muted`}>
                         {new Date(rec.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className="px-5 py-3.5">
-                        <span className="text-sm font-medium text-white/80">{rec.category}</span>
+                      <td className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'}`}>
+                        <span className="text-sm font-medium">{rec.category}</span>
                       </td>
-                      <td className="px-5 py-3.5">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${rec.type === 'income' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                      <td className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'}`}>
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${rec.type === 'income' ? 'bg-emerald-500/12 text-emerald-700' : 'bg-red-500/12 text-red-700'}`}>
                           {rec.type}
                         </span>
                       </td>
-                      <td className={`px-5 py-3.5 text-sm font-bold ${rec.type === 'income' ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <td className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'} text-sm font-bold ${rec.type === 'income' ? 'text-emerald-700' : 'text-red-700'}`}>
                         {rec.type === 'income' ? '+' : '-'}${rec.amount.toLocaleString()}
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-white/40 max-w-[180px] truncate">
+                      <td className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'} text-sm text-muted max-w-[180px] truncate`}>
                         {rec.description || '—'}
                       </td>
                       {canAdmin && (
-                        <td className="px-5 py-3.5">
+                        <td className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'}`}>
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setEditRecord(rec)}
-                              className="p-1.5 rounded-lg hover:bg-white/10 text-white/30 hover:text-violet-400 transition-colors"
+                              className="p-1.5 rounded-lg hover:bg-white text-muted transition-colors"
+                              style={{ color: '#45645b' }}
                             >
                               <Pencil size={14} />
                             </button>
                             <button
                               onClick={() => handleDelete(rec._id)}
                               disabled={deleting === rec._id}
-                              className="p-1.5 rounded-lg hover:bg-white/10 text-white/30 hover:text-red-400 transition-colors disabled:opacity-40"
+                              className="p-1.5 rounded-lg hover:bg-white transition-colors disabled:opacity-40"
+                              style={{ color: '#7f5b5f' }}
                             >
                               {deleting === rec._id ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                             </button>
@@ -190,26 +219,28 @@ const Records = () => {
                       )}
                     </motion.tr>
                   ))}
-                </tbody>
+                </motion.tbody>
               </table>
             </div>
 
             {/* Pagination */}
             {pages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3.5 border-t border-white/10">
-                <p className="text-xs text-white/30">Page {page} of {pages}</p>
+              <div className="flex items-center justify-between px-5 py-3.5 border-t" style={{ borderColor: 'var(--line)' }}>
+                <p className="text-xs text-muted">Page {page} of {pages}</p>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page === 1}
-                    className="p-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-white/50 disabled:opacity-30 transition-colors"
+                    className="p-1.5 rounded-lg border hover:bg-white text-muted disabled:opacity-30 transition-colors"
+                    style={{ borderColor: 'var(--line)' }}
                   >
                     <ChevronLeft size={16} />
                   </button>
                   <button
                     onClick={() => setPage((p) => Math.min(pages, p + 1))}
                     disabled={page === pages}
-                    className="p-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-white/50 disabled:opacity-30 transition-colors"
+                    className="p-1.5 rounded-lg border hover:bg-white text-muted disabled:opacity-30 transition-colors"
+                    style={{ borderColor: 'var(--line)' }}
                   >
                     <ChevronRight size={16} />
                   </button>

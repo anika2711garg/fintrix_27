@@ -5,6 +5,7 @@ A high-performance, secure, and scalable finance data processing backend built w
 ## 🚀 Features
 
 *   **Secure Authentication**: JWT-based auth with robust password hashing (bcrypt).
+*   **Pagination + Search**: Records and admin user APIs support pagination, filtering, and keyword search.
 *   **Role-Based Access Control (RBAC)**:
     *   `Admin`: Full CRUD access and user management.
     *   `Analyst`: Read access + dashboard insights.
@@ -13,7 +14,7 @@ A high-performance, secure, and scalable finance data processing backend built w
 *   **Dashboard Aggregation**: High-performance MongoDB pipelines for totals, monthly trends, and category-wise breakdowns.
 *   **Data Integrity**: **Soft Delete** implementation for all transactional and user data.
 *   **Production-Ready**: Rate limiting, security headers (Helmet), input validation (Zod), and global error handling.
-*   **Interactive Documentation**: Live Swagger UI for API exploration.
+*   **Interactive Documentation**: Live Swagger UI + Postman collection for API exploration.
 
 ## 🛠️ Tech Stack
 
@@ -57,6 +58,9 @@ npm test
 ## 📄 API Documentation
 Once the server is running, visit:
 `http://localhost:5000/api-docs`
+
+Postman collection:
+`docs/Fintrix.postman_collection.json`
 
 ## 🏗️ Architecture Design
 -   **Routes**: Definition of endpoints and middleware assignments.

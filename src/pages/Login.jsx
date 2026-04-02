@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, UserPlus, Loader2 } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Login = () => {
@@ -33,50 +33,74 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#09090b] text-white">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+    <div className="min-h-screen grid lg:grid-cols-2 items-stretch">
+      <section className="hidden lg:flex flex-col justify-between p-14 relative overflow-hidden">
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(130deg, rgba(11,143,119,0.14), rgba(255,255,255,0.2) 44%, rgba(240,138,75,0.16))' }} />
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold" style={{ background: 'var(--glass-soft)', border: '1px solid var(--line)' }}>
+            <TrendingUp size={16} color="#0b8f77" />
+            Fintrix Intelligence Suite
+          </div>
+          <h1 className="mt-10 text-6xl max-w-lg leading-[0.98]">Finance clarity for fast decisions.</h1>
+          <p className="mt-6 max-w-lg text-lg text-muted leading-relaxed">
+            Track every rupee, monitor spending behavior, and build confident forecasts with a dashboard that feels premium and precise.
+          </p>
+        </div>
+        <div className="relative z-10 panel-strong max-w-lg p-7">
+          <p className="text-sm font-semibold tracking-wide">Why teams pick Fintrix</p>
+          <ul className="mt-3 space-y-2 text-sm text-muted leading-relaxed">
+            <li>Instant role-based access for finance teams</li>
+            <li>Readable analytics with AI-driven commentary</li>
+            <li>Fast record management with audit-friendly flow</li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="flex items-center justify-center p-4 sm:p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md p-8 glass rounded-2xl space-y-6"
+        className="w-full max-w-md panel-strong p-8 sm:p-10 space-y-6"
       >
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </h1>
-          <p className="text-white/60">
-            {isLogin ? 'Enter your credentials to access your dashboard' : 'Join us to start managing your finances'}
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-[0.24em] text-muted">Secure Portal</p>
+          <h2 className="text-3xl font-bold tracking-tight">
+            {isLogin ? 'Welcome back' : 'Create your account'}
+          </h2>
+          <p className="text-muted">
+            {isLogin ? 'Sign in to access your finance workspace.' : 'Join Fintrix and start organizing your records.'}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div className="space-y-1">
-              <label className="text-sm font-medium text-white/70">Full Name</label>
-              <input 
+              <label className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Full Name</label>
+              <input
                 type="text" 
                 required 
-                className="w-full"
+                className="field"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
           )}
           <div className="space-y-1">
-            <label className="text-sm font-medium text-white/70">Email Address</label>
-            <input 
+            <label className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Email Address</label>
+            <input
               type="email" 
               required 
-              className="w-full"
+              className="field"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium text-white/70">Password</label>
-            <input 
+            <label className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Password</label>
+            <input
               type="password" 
               required 
-              className="w-full"
+              className="field"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             />
@@ -84,25 +108,25 @@ const Login = () => {
           
           {!isLogin && (
             <div className="space-y-1">
-              <label className="text-sm font-medium text-white/70">Role</label>
-              <select 
-                className="w-full"
+              <label className="text-sm font-medium" style={{ color: 'var(--ink)' }}>Role</label>
+              <select
+                className="field"
                 value={formData.role}
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               >
-                <option className="bg-[#09090b]" value="Viewer">Viewer (Read Only)</option>
-                <option className="bg-[#09090b]" value="Analyst">Analyst (Read + Insights)</option>
-                <option className="bg-[#09090b]" value="Admin">Admin (Full Access)</option>
+                <option value="Viewer">Viewer (Read Only)</option>
+                <option value="Analyst">Analyst (Read + Insights)</option>
+                <option value="Admin">Admin (Full Access)</option>
               </select>
             </div>
           )}
 
-          {error && <p className="text-danger text-sm">{error}</p>}
+          {error && <p className="text-sm" style={{ color: 'var(--danger)' }}>{error}</p>}
 
-          <button 
+          <button
             type="submit" 
             disabled={loading}
-            className="w-full bg-primary hover:bg-secondary py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors"
+            className="w-full btn-primary flex items-center justify-center gap-2"
           >
             {loading ? <Loader2 className="animate-spin" /> : isLogin ? <LogIn size={20} /> : <UserPlus size={20} />}
             {isLogin ? 'Sign In' : 'Create Account'}
@@ -110,14 +134,16 @@ const Login = () => {
         </form>
 
         <div className="text-center">
-          <button 
+          <button
             onClick={() => setIsLogin(!isLogin)}
-            className="text-primary hover:underline text-sm"
+            className="text-sm font-semibold hover:underline"
+            style={{ color: 'var(--brand)' }}
           >
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
           </button>
         </div>
       </motion.div>
+      </section>
     </div>
   );
 };

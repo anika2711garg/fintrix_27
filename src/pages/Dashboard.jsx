@@ -10,27 +10,48 @@ import {
 import AddRecordModal from '../components/AddRecordModal';
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const PIE_COLORS = ['#7c3aed', '#2563eb', '#059669', '#d97706', '#dc2626', '#0891b2', '#7c3aed', '#16a34a'];
+const PIE_COLORS = ['#0b8f77', '#f08a4b', '#1982c4', '#39a96b', '#e36465', '#7b6d8d', '#d4a017', '#2b6f77'];
 
-const StatCard = ({ title, amount, icon, trend }) => (
+const sectionReveal = {
+  hidden: { opacity: 0, y: 14 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+};
+
+const cardStagger = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.04,
+    },
+  },
+};
+
+const cardItem = {
+  hidden: { opacity: 0, y: 14 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+};
+
+const StatCard = ({ title, amount, icon, compact }) => (
   <motion.div
+    variants={cardItem}
     whileHover={{ y: -4 }}
     transition={{ type: 'spring', stiffness: 300 }}
-    className="bg-white/[0.03] border border-white/10 rounded-2xl p-5 hover:border-white/20 transition-colors"
+    className={`panel panel-lift ${compact ? 'p-4' : 'p-5'} hover:bg-white/90 transition-colors`}
   >
-    <div className="flex justify-between items-start mb-4">
-      <div className="p-2.5 bg-white/5 rounded-xl border border-white/5">{icon}</div>
-      <p className="text-xs font-medium text-white/40 uppercase tracking-wider">{title}</p>
+    <div className={`flex justify-between items-start ${compact ? 'mb-3' : 'mb-4'}`}>
+      <div className="p-2.5 rounded-xl border bg-white/70" style={{ borderColor: 'var(--line)' }}>{icon}</div>
+      <p className="text-xs font-medium uppercase tracking-wider text-muted">{title}</p>
     </div>
-    <p className="text-3xl font-bold text-white">${(amount ?? 0).toLocaleString()}</p>
+    <p className={`${compact ? 'text-2xl' : 'text-3xl'} font-bold`}>${(amount ?? 0).toLocaleString()}</p>
   </motion.div>
 );
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload?.length) {
     return (
-      <div className="bg-[#0d0d10] border border-white/10 rounded-xl p-3 text-xs shadow-xl">
-        <p className="text-white/60 mb-1.5">{label}</p>
+      <div className="panel-strong p-3 text-xs shadow-xl">
+        <p className="text-muted mb-1.5">{label}</p>
         {payload.map((p) => (
           <p key={p.dataKey} style={{ color: p.color }}>
             {p.name}: ${p.value?.toLocaleString()}
@@ -48,6 +69,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [loadingInsights, setLoadingInsights] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [compact, setCompact] = useState(false);
   const { user } = useAuth();
 
   const fetchDashboard = async () => {
@@ -81,7 +103,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 size={36} className="animate-spin text-violet-400" />
+        <Loader2 size={36} className="animate-spin" color="#0b8f77" />
       </div>
     );
   }
@@ -102,87 +124,91 @@ const Dashboard = () => {
   }));
 
   return (
-    <div className="space-y-8">
+    <motion.div className={compact ? 'space-y-6' : 'space-y-8'} initial="hidden" animate="visible" variants={cardStagger}>
       <AddRecordModal
         isOpen={addOpen}
         onClose={() => setAddOpen(false)}
         onSuccess={fetchDashboard}
       />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <motion.div variants={sectionReveal} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">
-            Welcome back, <span className="text-violet-400">{user?.name?.split(' ')[0]}</span>
+          <p className="text-xs uppercase tracking-[0.22em] text-muted mb-2">Overview</p>
+          <h1 className="text-3xl font-bold">
+            Welcome back, <span style={{ color: 'var(--brand)' }}>{user?.name?.split(' ')[0]}</span>
           </h1>
-          <p className="text-sm text-white/40 mt-0.5">
-            Role: <span className="text-white/60 font-medium">{user?.role}</span>
+          <p className="text-sm text-muted mt-0.5">
+            Role: <span className="font-semibold" style={{ color: 'var(--ink)' }}>{user?.role}</span>
           </p>
         </div>
-        {user?.role !== 'Viewer' && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setAddOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-xl text-sm font-semibold text-white transition-colors shadow-lg shadow-violet-500/20"
+            onClick={() => setCompact((v) => !v)}
+            className="btn-secondary text-sm"
           >
-            <Plus size={18} /> Add Record
+            {compact ? 'Comfort View' : 'Dense View'}
           </button>
-        )}
-      </div>
+          {user?.role !== 'Viewer' && (
+            <button
+              onClick={() => setAddOpen(true)}
+              className="btn-primary flex items-center gap-2 text-sm"
+            >
+              <Plus size={18} /> Add Record
+            </button>
+          )}
+        </div>
+      </motion.div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <StatCard title="Total Income" amount={summary.totalIncome} icon={<TrendingUp size={18} className="text-emerald-400" />} />
-        <StatCard title="Total Expenses" amount={summary.totalExpenses} icon={<TrendingDown size={18} className="text-red-400" />} />
-        <StatCard title="Net Balance" amount={summary.netBalance} icon={<Wallet size={18} className="text-violet-400" />} />
-      </div>
+      <motion.div variants={cardStagger} className={`grid grid-cols-1 sm:grid-cols-3 ${compact ? 'gap-3' : 'gap-5'}`}>
+        <StatCard compact={compact} title="Total Income" amount={summary.totalIncome} icon={<TrendingUp size={18} color="#118a4e" />} />
+        <StatCard compact={compact} title="Total Expenses" amount={summary.totalExpenses} icon={<TrendingDown size={18} color="#d93036" />} />
+        <StatCard compact={compact} title="Net Balance" amount={summary.netBalance} icon={<Wallet size={18} color="#0b8f77" />} />
+      </motion.div>
 
-      {/* Charts (Analyst/Admin only) */}
       {user?.role !== 'Viewer' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Area Chart */}
-          <div className="lg:col-span-2 bg-white/[0.03] border border-white/10 rounded-2xl p-5">
-            <h2 className="text-sm font-semibold text-white/70 mb-5">Monthly Trends</h2>
+        <motion.div variants={sectionReveal} className={`grid grid-cols-1 lg:grid-cols-3 ${compact ? 'gap-3' : 'gap-5'}`}>
+          <div className={`lg:col-span-2 panel panel-lift ${compact ? 'p-4' : 'p-5'}`}>
+            <h2 className={`text-sm font-semibold ${compact ? 'mb-3' : 'mb-5'}`}>Monthly Trends</h2>
             {loadingInsights ? (
               <div className="flex items-center justify-center h-40">
-                <Loader2 size={24} className="animate-spin text-violet-400" />
+                <Loader2 size={24} className="animate-spin" color="#0b8f77" />
               </div>
             ) : monthlyData.length === 0 ? (
-              <div className="flex items-center justify-center h-40 text-white/20 text-sm">No data yet</div>
+              <div className="flex items-center justify-center h-40 text-muted text-sm">No data yet</div>
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={compact ? 170 : 200}>
                 <AreaChart data={monthlyData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#0b8f77" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#0b8f77" stopOpacity={0} />
                     </linearGradient>
                     <linearGradient id="expenseGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#e36465" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#e36465" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                  <XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(11, 45, 35, 0.11)" />
+                  <XAxis dataKey="name" tick={{ fill: '#61716a', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: '#61716a', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Area type="monotone" dataKey="Income" stroke="#7c3aed" strokeWidth={2} fill="url(#incomeGrad)" />
-                  <Area type="monotone" dataKey="Expense" stroke="#ef4444" strokeWidth={2} fill="url(#expenseGrad)" />
+                  <Area type="monotone" dataKey="Income" stroke="#0b8f77" strokeWidth={2} fill="url(#incomeGrad)" />
+                  <Area type="monotone" dataKey="Expense" stroke="#e36465" strokeWidth={2} fill="url(#expenseGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
 
-          {/* Pie Chart */}
-          <div className="bg-white/[0.03] border border-white/10 rounded-2xl p-5">
-            <h2 className="text-sm font-semibold text-white/70 mb-5">Category Breakdown</h2>
+          <div className={`panel panel-lift ${compact ? 'p-4' : 'p-5'}`}>
+            <h2 className={`text-sm font-semibold ${compact ? 'mb-3' : 'mb-5'}`}>Category Breakdown</h2>
             {loadingInsights ? (
               <div className="flex items-center justify-center h-40">
-                <Loader2 size={24} className="animate-spin text-violet-400" />
+                <Loader2 size={24} className="animate-spin" color="#0b8f77" />
               </div>
             ) : categoryData.length === 0 ? (
-              <div className="flex items-center justify-center h-40 text-white/20 text-sm">No data yet</div>
+              <div className="flex items-center justify-center h-40 text-muted text-sm">No data yet</div>
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={compact ? 170 : 200}>
                 <PieChart>
                   <Pie data={categoryData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={3} dataKey="value">
                     {categoryData.map((_, i) => (
@@ -190,89 +216,93 @@ const Dashboard = () => {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#0d0d10', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px', color: 'white' }}
+                    contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(15,45,35,0.15)', borderRadius: '12px', fontSize: '12px', color: '#16211b' }}
                     formatter={(v) => [`$${v.toLocaleString()}`, '']}
                   />
                   <Legend
                     iconType="circle"
                     iconSize={8}
-                    formatter={(v) => <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>{v}</span>}
+                    formatter={(v) => <span style={{ color: '#64766d', fontSize: '11px' }}>{v}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {/* AI Insights (Analyst/Admin) */}
       {user?.role !== 'Viewer' && (
-        <div className="bg-violet-500/5 border border-violet-500/20 rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-violet-300 mb-3 flex items-center gap-2">
+        <motion.div variants={sectionReveal} className={`rounded-2xl border ${compact ? 'p-4' : 'p-5'}`} style={{ background: 'linear-gradient(135deg, rgba(11,143,119,0.09), rgba(240,138,75,0.1))', borderColor: 'rgba(11,143,119,0.22)' }}>
+          <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--brand)' }}>
             <TrendingUp size={15} /> AI Financial Insights
           </h2>
           {loadingInsights ? (
-            <div className="flex items-center gap-2 text-white/30 text-sm animate-pulse">
+            <div className="flex items-center gap-2 text-muted text-sm animate-pulse">
               <Loader2 size={14} className="animate-spin" /> Analyzing patterns...
             </div>
           ) : insights?.insight ? (
-            <div className="text-sm text-white/60 leading-relaxed whitespace-pre-line">{insights.insight}</div>
+            <div className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--ink)' }}>{insights.insight}</div>
           ) : typeof insights === 'string' ? (
-            <div className="text-sm text-white/60 leading-relaxed whitespace-pre-line">{insights}</div>
+            <div className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--ink)' }}>{insights}</div>
           ) : (
-            <p className="text-sm text-white/30 italic">Add more records to generate insights.</p>
+            <p className="text-sm text-muted italic">Add more records to generate insights.</p>
           )}
-        </div>
+        </motion.div>
       )}
 
-      {/* Recent Transactions */}
-      <div className="space-y-4">
-        <h2 className="text-base font-semibold text-white/80">Recent Activity</h2>
-        <div className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-hidden">
+      <motion.div variants={sectionReveal} className="space-y-4">
+        <h2 className="text-base font-semibold">Recent Activity</h2>
+        <div className="panel panel-lift overflow-hidden">
           {recentTx.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center">
-                <FileText size={20} className="text-white/20" />
+              <div className="w-12 h-12 rounded-2xl bg-white/80 flex items-center justify-center border" style={{ borderColor: 'var(--line)' }}>
+                <FileText size={20} className="text-muted" />
               </div>
-              <p className="text-white/30 text-sm">No transactions yet</p>
+              <p className="text-muted text-sm">No transactions yet</p>
               {user?.role !== 'Viewer' && (
-                <button onClick={() => setAddOpen(true)} className="text-xs text-violet-400 hover:underline">
+                <button onClick={() => setAddOpen(true)} className="text-xs hover:underline" style={{ color: 'var(--brand)' }}>
                   Add your first record
                 </button>
               )}
             </div>
           ) : (
             <table className="w-full text-left">
-              <thead className="border-b border-white/10">
+              <thead className="border-b" style={{ borderColor: 'var(--line)' }}>
                 <tr>
                   {['Date', 'Category', 'Type', 'Amount'].map((h) => (
-                    <th key={h} className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-white/30">{h}</th>
+                    <th key={h} className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'} text-xs font-semibold uppercase tracking-wider text-muted`}>{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <motion.tbody
+                className="divide-y"
+                style={{ borderColor: 'rgba(15,45,35,0.08)' }}
+                variants={cardStagger}
+                initial="hidden"
+                animate="visible"
+              >
                 {recentTx.map((tx) => (
-                  <tr key={tx._id} className="hover:bg-white/[0.03] transition-colors">
-                    <td className="px-5 py-3.5 text-sm text-white/50">
+                  <motion.tr key={tx._id} variants={cardItem} className="hover:bg-white/70 transition-colors">
+                    <td className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'} text-sm text-muted`}>
                       {new Date(tx.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
-                    <td className="px-5 py-3.5 text-sm font-medium text-white/80">{tx.category}</td>
-                    <td className="px-5 py-3.5">
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${tx.type === 'income' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                    <td className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'} text-sm font-medium`}>{tx.category}</td>
+                    <td className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${tx.type === 'income' ? 'bg-emerald-500/12 text-emerald-700' : 'bg-red-500/12 text-red-700'}`}>
                         {tx.type}
                       </span>
                     </td>
-                    <td className={`px-5 py-3.5 text-sm font-bold ${tx.type === 'income' ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <td className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'} text-sm font-bold ${tx.type === 'income' ? 'text-emerald-700' : 'text-red-700'}`}>
                       {tx.type === 'income' ? '+' : '-'}${tx.amount.toLocaleString()}
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
-              </tbody>
+              </motion.tbody>
             </table>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 
