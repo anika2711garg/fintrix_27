@@ -3,10 +3,11 @@ const catchAsync = require('../utils/catchAsync');
 
 // @desc    Get dashboard summary
 // @route   GET /api/dashboard/summary
-// @access  Private
+// @access  Private (Analyst/Admin)
 exports.getSummary = catchAsync(async (req, res, next) => {
-  const summary = await dashboardService.getSummary();
-  const recentTransactions = await dashboardService.getRecentTransactions();
+  const summary = await dashboardService.getSummary(req.user);
+  const recentTransactions = await dashboardService.getRecentTransactions(req.user);
+
   res.status(200).json({ success: true, data: { summary, recentTransactions } });
 });
 
@@ -14,30 +15,28 @@ exports.getSummary = catchAsync(async (req, res, next) => {
 // @route   GET /api/dashboard/insights
 // @access  Private (Analyst/Admin)
 exports.getInsights = catchAsync(async (req, res, next) => {
-  const breakdown = await dashboardService.getCategoryBreakdown();
-  const trends = await dashboardService.getMonthlyTrends();
+  const [categoryBreakdown, monthlyTrends, advanced] = await Promise.all([
+    dashboardService.getCategoryBreakdown(req.user),
+    dashboardService.getMonthlyTrends(req.user),
+    dashboardService.getAdvancedInsights(req.user),
+  ]);
 
-  let insight = 'Based on your financial patterns:\n\n';
-  if (breakdown.length > 0) {
-    insight += `• Your top spending category is '${breakdown[0]._id}' with $${breakdown[0].total.toLocaleString()} total.\n`;
+  let insight = 'Financial insight:\n';
+  if (categoryBreakdown.length > 0) {
+    insight += `Top spending category: ${categoryBreakdown[0]._id} (${categoryBreakdown[0].total.toFixed(2)}). `;
   }
-  if (trends.length > 0) {
-    const lastMonth = trends[trends.length - 1];
-    const monthName = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][lastMonth._id.month - 1];
-    insight += `• In ${monthName} ${lastMonth._id.year}, income was $${lastMonth.income.toLocaleString()} and expenses were $${lastMonth.expense.toLocaleString()}.\n`;
-    const net = lastMonth.income - lastMonth.expense;
-    insight += `• Net for the month: ${net >= 0 ? '+' : ''}$${net.toLocaleString()}.\n`;
+  if (advanced.incomeExpenseRatio !== null) {
+    insight += `Income/Expense ratio: ${advanced.incomeExpenseRatio}. `;
   }
-  if (breakdown.length === 0 && trends.length === 0) {
-    insight = 'Not enough data to generate insights yet. Add some financial records to get started!';
-  }
+  insight += `Average transaction value: ${advanced.averageTransactionValue}.`;
 
   res.status(200).json({
     success: true,
     data: {
       insight,
-      categoryBreakdown: breakdown,
-      monthlyTrends: trends,
+      categoryBreakdown,
+      monthlyTrends,
+      advanced,
     },
   });
 });

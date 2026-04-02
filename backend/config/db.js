@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const AppError = require('../utils/AppError');
 
 let cachedConnection = null;
 
@@ -13,7 +14,13 @@ const connectDB = async () => {
   }
 
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/finance_db');
+    if (!process.env.MONGODB_URI) {
+      throw new AppError('MONGODB_URI is required', 500);
+    }
+
+    mongoose.set('strictQuery', true);
+
+    const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     cachedConnection = conn.connection;
     return cachedConnection;

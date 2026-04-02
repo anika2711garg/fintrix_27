@@ -1,7 +1,11 @@
 const express = require('express');
 const {
   register,
+  createUser,
   login,
+  refresh,
+  logout,
+  logoutAll,
   getMe,
   getUsers,
   updateUser,
@@ -12,7 +16,10 @@ const { authorize } = require('../middleware/rbac');
 const validate = require('../middleware/validate');
 const {
   registerSchema,
+  createUserSchema,
   loginSchema,
+  refreshSchema,
+  logoutSchema,
   getUsersSchema,
   updateUserSchema,
   userIdParamSchema,
@@ -48,7 +55,7 @@ const router = express.Router();
  *           example: secret123
  *         role:
  *           type: string
- *           enum: [Admin, Analyst, Viewer]
+ *           enum: [admin, analyst, viewer]
  *     AuthLoginRequest:
  *       type: object
  *       required: [email, password]
@@ -65,10 +72,10 @@ const router = express.Router();
  *       properties:
  *         role:
  *           type: string
- *           enum: [Admin, Analyst, Viewer]
+ *           enum: [admin, analyst, viewer]
  *         status:
  *           type: string
- *           enum: [Active, Inactive]
+ *           enum: [active, inactive]
  */
 
 /**
@@ -109,6 +116,12 @@ router.post('/register', validate(registerSchema), register);
  */
 router.post('/login', validate(loginSchema), login);
 
+router.post('/refresh', validate(refreshSchema), refresh);
+
+router.post('/logout', validate(logoutSchema), logout);
+
+router.post('/logout-all', protect, logoutAll);
+
 /**
  * @swagger
  * /api/auth/me:
@@ -125,6 +138,8 @@ router.post('/login', validate(loginSchema), login);
  */
 router.get('/me', protect, getMe);
 
+router.post('/users', protect, authorize('admin'), validate(createUserSchema), createUser);
+
 /**
  * @swagger
  * /api/auth/users:
@@ -138,12 +153,12 @@ router.get('/me', protect, getMe);
  *         name: role
  *         schema:
  *           type: string
- *           enum: [Admin, Analyst, Viewer]
+ *           enum: [admin, analyst, viewer]
  *       - in: query
  *         name: status
  *         schema:
  *           type: string
- *           enum: [Active, Inactive]
+ *           enum: [active, inactive]
  *       - in: query
  *         name: search
  *         schema:
@@ -166,7 +181,7 @@ router.get('/me', protect, getMe);
  *       200:
  *         description: Paginated list of users
  */
-router.get('/users', protect, authorize('Admin'), validate(getUsersSchema), getUsers);
+router.get('/users', protect, authorize('admin'), validate(getUsersSchema), getUsers);
 
 /**
  * @swagger
@@ -192,7 +207,7 @@ router.get('/users', protect, authorize('Admin'), validate(getUsersSchema), getU
  *       200:
  *         description: User updated successfully
  */
-router.put('/users/:id', protect, authorize('Admin'), validate(updateUserSchema), updateUser);
+router.put('/users/:id', protect, authorize('admin'), validate(updateUserSchema), updateUser);
 
 /**
  * @swagger
@@ -212,6 +227,6 @@ router.put('/users/:id', protect, authorize('Admin'), validate(updateUserSchema)
  *       200:
  *         description: User soft-deleted successfully
  */
-router.delete('/users/:id', protect, authorize('Admin'), validate(userIdParamSchema), deleteUser);
+router.delete('/users/:id', protect, authorize('admin'), validate(userIdParamSchema), deleteUser);
 
 module.exports = router;

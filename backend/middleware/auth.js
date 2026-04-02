@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const AppError = require('../utils/AppError');
 
 // Protect routes
 exports.protect = async (req, res, next) => {
@@ -11,25 +12,29 @@ exports.protect = async (req, res, next) => {
 
   // Make sure token exists
   if (!token) {
-    return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
+    return next(new AppError('Not authorized to access this route', 401));
   }
 
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = await User.findById(decoded.id);
+    req.user = await User.findById(decoded.id).select('+tokenVersion');
 
     if (!req.user) {
-      return res.status(401).json({ success: false, message: 'User not found' });
+      return next(new AppError('User not found', 401));
     }
 
-    if (req.user.status === 'Inactive') {
-      return res.status(403).json({ success: false, message: 'User account is deactivated' });
+    if (req.user.status === 'inactive') {
+      return next(new AppError('User account is deactivated', 403));
+    }
+
+    if (typeof decoded.tokenVersion === 'number' && decoded.tokenVersion !== req.user.tokenVersion) {
+      return next(new AppError('Session is no longer valid. Please login again.', 401));
     }
 
     next();
   } catch (err) {
-    return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
+    return next(new AppError('Not authorized to access this route', 401));
   }
 };

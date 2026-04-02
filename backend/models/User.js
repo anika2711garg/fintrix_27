@@ -21,17 +21,22 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['Admin', 'Analyst', 'Viewer'],
-      default: 'Viewer',
+      enum: ['admin', 'analyst', 'viewer'],
+      default: 'viewer',
     },
     status: {
       type: String,
-      enum: ['Active', 'Inactive'],
-      default: 'Active',
+      enum: ['active', 'inactive'],
+      default: 'active',
     },
     isDeleted: {
       type: Boolean,
       default: false,
+      select: false,
+    },
+    tokenVersion: {
+      type: Number,
+      default: 0,
       select: false,
     },
   },
@@ -42,7 +47,10 @@ const userSchema = new mongoose.Schema(
 
 // Query middleware for soft delete
 userSchema.pre(/^find/, function () {
-  // this points to the current query
+  if (this.getOptions().includeDeleted) {
+    return;
+  }
+
   this.where({ isDeleted: { $ne: true } });
 });
 
@@ -59,5 +67,7 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+userSchema.index({ role: 1, status: 1 });
 
 module.exports = mongoose.model('User', userSchema);

@@ -42,11 +42,17 @@ const financialRecordSchema = new mongoose.Schema(
 
 // Query middleware for soft delete
 financialRecordSchema.pre(/^find/, function () {
+  if (this.getOptions().includeDeleted) {
+    return;
+  }
+
   this.where({ isDeleted: { $ne: true } });
 });
 
 // Indexing for faster filtering
+financialRecordSchema.index({ createdBy: 1, date: -1 });
 financialRecordSchema.index({ type: 1, category: 1, date: -1 });
-financialRecordSchema.index({ createdBy: 1 });
+financialRecordSchema.index({ isDeleted: 1, date: -1 });
+financialRecordSchema.index({ description: 'text', category: 'text' });
 
 module.exports = mongoose.model('FinancialRecord', financialRecordSchema);

@@ -3,7 +3,7 @@ services:
     name: fintrix
     env: node
     plan: free
-    buildCommand: npm --prefix backend install && npm --prefix frontend install && npm --prefix frontend run build
+    buildCommand: npm --prefix backend install
     startCommand: npm --prefix backend run start
     autoDeploy: true
     envVars:
@@ -17,5 +17,5 @@ services:
         sync: false
       - key: CORS_ORIGIN
         sync: false
-      - key: VITE_API_BASE_URL
+      - key: PUBLIC_API_URL
         sync: false

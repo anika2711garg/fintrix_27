@@ -18,7 +18,8 @@ describe('recordService unit tests', () => {
     const queryChain = {
       sort: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockResolvedValue(queryResult),
+      limit: jest.fn().mockReturnThis(),
+      populate: jest.fn().mockResolvedValue(queryResult),
     };
 
     FinancialRecord.countDocuments.mockResolvedValue(12);
@@ -30,7 +31,7 @@ describe('recordService unit tests', () => {
       search: 'lunch',
       page: 2,
       limit: 5,
-    });
+    }, { role: 'admin' });
 
     expect(FinancialRecord.countDocuments).toHaveBeenCalledWith({
       type: 'expense',
@@ -47,6 +48,7 @@ describe('recordService unit tests', () => {
       total: 12,
       page: 2,
       pages: 3,
+      count: 2,
       records: queryResult,
     });
   });
@@ -56,7 +58,7 @@ describe('recordService unit tests', () => {
 
     await recordService.deleteRecord('abc');
 
-    expect(FinancialRecord.findByIdAndUpdate).toHaveBeenCalledWith('abc', { isDeleted: true });
+    expect(FinancialRecord.findByIdAndUpdate).toHaveBeenCalledWith('abc', { isDeleted: true }, { new: true });
   });
 
   it('deleteRecord should throw when record is not found', async () => {

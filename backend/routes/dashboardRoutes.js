@@ -26,7 +26,7 @@ router.use(protect);
  *       200:
  *         description: Dashboard summary data
  */
-router.get('/summary', getSummary);
+router.get('/summary', authorize('admin', 'analyst'), getSummary);
 
 /**
  * @swagger
@@ -40,6 +40,6 @@ router.get('/summary', getSummary);
  *       200:
  *         description: Dashboard insight data
  */
-router.get('/insights', authorize('Admin', 'Analyst'), getInsights);
+router.get('/insights', authorize('admin', 'analyst'), getInsights);
 
 module.exports = router;

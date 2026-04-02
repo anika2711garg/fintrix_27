@@ -1,18 +1,24 @@
 const express = require('express');
 const {
   getRecords,
+  exportRecords,
+  getDeletedRecords,
   getRecord,
   createRecord,
   updateRecord,
   deleteRecord,
+  restoreRecord,
 } = require('../controllers/recordController');
 const { protect } = require('../middleware/auth');
 const { authorize } = require('../middleware/rbac');
 const validate = require('../middleware/validate');
 const {
   createRecordSchema,
+  updateRecordSchema,
   getRecordsSchema,
+  exportRecordsSchema,
   recordIdParamSchema,
+  getTrashSchema,
 } = require('../validations/recordValidation');
 
 const router = express.Router();
@@ -25,6 +31,9 @@ const router = express.Router();
  */
 
 router.use(protect);
+
+router.get('/export', validate(exportRecordsSchema), exportRecords);
+router.get('/trash', authorize('admin'), validate(getTrashSchema), getDeletedRecords);
 
 /**
  * @swagger
@@ -84,7 +93,7 @@ router.use(protect);
 router
   .route('/')
   .get(validate(getRecordsSchema), getRecords)
-  .post(authorize('Admin', 'Analyst'), validate(createRecordSchema), createRecord);
+  .post(authorize('admin'), validate(createRecordSchema), createRecord);
 
 /**
  * @swagger
@@ -135,7 +144,9 @@ router
 router
   .route('/:id')
   .get(validate(recordIdParamSchema), getRecord)
-  .put(authorize('Admin'), validate(recordIdParamSchema), validate(createRecordSchema), updateRecord)
-  .delete(authorize('Admin'), validate(recordIdParamSchema), deleteRecord);
+  .put(authorize('admin'), validate(updateRecordSchema), updateRecord)
+  .delete(authorize('admin'), validate(recordIdParamSchema), deleteRecord);
+
+router.patch('/:id/restore', authorize('admin'), validate(recordIdParamSchema), restoreRecord);
 
 module.exports = router;
