@@ -35,7 +35,10 @@ describe('recordService unit tests', () => {
     expect(FinancialRecord.countDocuments).toHaveBeenCalledWith({
       type: 'expense',
       category: 'Food',
-      description: { $regex: 'lunch', $options: 'i' },
+      $or: [
+        { category: { $regex: 'lunch', $options: 'i' } },
+        { description: { $regex: 'lunch', $options: 'i' } },
+      ],
     });
 
     expect(queryChain.skip).toHaveBeenCalledWith(5);

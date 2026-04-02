@@ -17,7 +17,10 @@ exports.getAllRecords = async (query) => {
   }
   
   if (search) {
-    filter.description = { $regex: search, $options: 'i' };
+    filter.$or = [
+      { category: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+    ];
   }
 
   const total = await FinancialRecord.countDocuments(filter);
