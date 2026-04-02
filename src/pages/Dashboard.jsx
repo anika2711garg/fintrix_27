@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { dashboardService } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { TrendingUp, TrendingDown, Wallet, Plus, Loader2, FileText } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Plus, Loader2, FileText, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -110,6 +110,9 @@ const Dashboard = () => {
 
   const summary = data?.summary || { totalIncome: 0, totalExpenses: 0, netBalance: 0 };
   const recentTx = data?.recentTransactions || [];
+  const savingsRate = summary.totalIncome > 0
+    ? Math.max(0, Math.min(100, Math.round((summary.netBalance / summary.totalIncome) * 100)))
+    : 0;
 
   // Build chart data from insights (passed via API)
   const monthlyData = (insights?.monthlyTrends || []).map((m) => ({
@@ -156,6 +159,20 @@ const Dashboard = () => {
               <Plus size={18} /> Add Record
             </button>
           )}
+        </div>
+      </motion.div>
+
+      <motion.div variants={sectionReveal} className="panel panel-lift p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(11,143,119,0.12)', color: 'var(--brand)' }}>
+            <Sparkles size={13} /> Financial Pulse
+          </div>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: 'rgba(16,185,129,0.12)', color: '#0f8a58' }}>
+            Savings Rate {savingsRate}%
+          </div>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold" style={{ background: summary.netBalance >= 0 ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', color: summary.netBalance >= 0 ? '#0f8a58' : '#b83136' }}>
+            Net {summary.netBalance >= 0 ? 'Positive' : 'Negative'}
+          </div>
         </div>
       </motion.div>
 

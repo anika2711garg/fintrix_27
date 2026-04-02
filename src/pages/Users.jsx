@@ -20,6 +20,9 @@ const Users = () => {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(null);
 
+  const activeUsers = users.filter((u) => u.status === 'Active').length;
+  const adminUsers = users.filter((u) => u.role === 'Admin').length;
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -53,6 +56,23 @@ const Users = () => {
         <h1 className="text-3xl font-bold">User Management</h1>
         <p className="text-sm text-muted mt-0.5">{users.length} registered users</p>
       </div>
+
+      {!loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="panel panel-lift p-4">
+            <p className="text-xs uppercase tracking-wider text-muted">Total Users</p>
+            <p className="mt-2 text-2xl font-bold">{users.length}</p>
+          </div>
+          <div className="panel panel-lift p-4">
+            <p className="text-xs uppercase tracking-wider text-muted">Active Users</p>
+            <p className="mt-2 text-2xl font-bold text-emerald-700">{activeUsers}</p>
+          </div>
+          <div className="panel panel-lift p-4">
+            <p className="text-xs uppercase tracking-wider text-muted">Admins</p>
+            <p className="mt-2 text-2xl font-bold" style={{ color: 'var(--brand)' }}>{adminUsers}</p>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20">

@@ -104,7 +104,7 @@ const Records = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="panel panel-lift p-3 sm:p-4 flex flex-col sm:flex-row gap-3">
         <div className="flex-1 relative">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
           <input
@@ -177,8 +177,12 @@ const Records = () => {
                   initial="hidden"
                   animate="visible"
                 >
-                  {records.map((rec) => (
-                    <motion.tr key={rec._id} variants={rowReveal} className="hover:bg-white/70 transition-colors">
+                  {records.map((rec, idx) => (
+                    <motion.tr
+                      key={rec._id}
+                      variants={rowReveal}
+                      className={`transition-colors ${idx % 2 === 0 ? 'bg-white/[0.14]' : 'bg-transparent'} hover:bg-white/70`}
+                    >
                       <td className={`${compact ? 'px-4 py-2.5' : 'px-5 py-3.5'} text-sm text-muted`}>
                         {new Date(rec.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>

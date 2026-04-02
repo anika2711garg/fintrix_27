@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  LayoutDashboard, FileText, Users, LogOut, Menu, TrendingUp, ChevronRight, Sun, Moon,
+  LayoutDashboard, FileText, Users, LogOut, Menu, TrendingUp, ChevronRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const pageAnim = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.25 } },
+};
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin', 'Analyst', 'Viewer'] },
@@ -16,26 +21,14 @@ const Layout = ({ children }) => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('fintrix-theme');
-    if (saved === 'light' || saved === 'dark') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('fintrix-theme', theme);
-  }, [theme]);
 
   const filtered = navItems.filter((item) => item.roles.includes(user?.role));
-  const isDark = theme === 'dark';
-  const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  const navDefaultColor = isDark ? '#9fb4ab' : '#53675f';
-  const navIconDefault = isDark ? '#86a096' : '#70857c';
-  const sidebarBg = isDark ? 'rgba(20, 30, 25, 0.62)' : 'rgba(255,255,255,0.48)';
-  const mobileHeaderBg = isDark ? 'rgba(20, 30, 25, 0.8)' : 'rgba(255,255,255,0.62)';
-  const userCardBg = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.65)';
-  const mobileDrawerBg = isDark ? 'rgba(14, 21, 18, 0.98)' : 'rgba(247, 248, 241, 0.98)';
+  const navDefaultColor = '#53675f';
+  const navIconDefault = '#70857c';
+  const sidebarBg = 'rgba(255,255,255,0.48)';
+  const mobileHeaderBg = 'rgba(255,255,255,0.62)';
+  const userCardBg = 'rgba(255,255,255,0.65)';
+  const mobileDrawerBg = 'rgba(247, 248, 241, 0.98)';
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -77,15 +70,6 @@ const Layout = ({ children }) => {
       </nav>
 
       <div className="p-4 border-t" style={{ borderColor: 'var(--line)' }}>
-        <button
-          onClick={toggleTheme}
-          className="w-full mb-3 flex items-center justify-center gap-2 p-2.5 rounded-xl border text-sm font-semibold transition-colors hover:bg-white/60"
-          style={{ borderColor: 'var(--line)' }}
-          aria-label="Toggle color theme"
-        >
-          {isDark ? <Sun size={16} /> : <Moon size={16} />}
-          {isDark ? 'Light Mode' : 'Dark Mode'}
-        </button>
         <div className="flex items-center gap-3 p-3 rounded-2xl" style={{ background: userCardBg }}>
           <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: 'linear-gradient(135deg, #0b8f77, #f08a4b)' }}>
             {user?.name?.charAt(0).toUpperCase()}
@@ -155,17 +139,17 @@ const Layout = ({ children }) => {
             </div>
             <span className="font-bold">Fintrix</span>
           </div>
-          <button
-            onClick={toggleTheme}
-            className="ml-auto p-2 rounded-lg hover:bg-white/90"
-            aria-label="Toggle color theme"
-          >
-            {isDark ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          {children}
+          <motion.div
+            key={location.pathname}
+            variants={pageAnim}
+            initial="hidden"
+            animate="visible"
+          >
+            {children}
+          </motion.div>
         </main>
       </div>
       </div>

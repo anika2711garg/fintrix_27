@@ -5,6 +5,21 @@ import { useAuth } from '../context/AuthContext';
 import { LogIn, UserPlus, Loader2, TrendingUp } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 18 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' } },
+};
+
+const stagger = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.08,
+    },
+  },
+};
+
 const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -34,32 +49,42 @@ const Login = () => {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 items-stretch">
-      <section className="hidden lg:flex flex-col justify-between p-14 relative overflow-hidden">
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={stagger}
+        className="hidden lg:flex flex-col justify-between p-14 relative overflow-hidden"
+      >
         <div className="absolute inset-0" style={{ background: 'linear-gradient(130deg, rgba(11,143,119,0.14), rgba(255,255,255,0.2) 44%, rgba(240,138,75,0.16))' }} />
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold" style={{ background: 'var(--glass-soft)', border: '1px solid var(--line)' }}>
+        <motion.div variants={fadeUp} className="relative z-10">
+          <motion.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold" style={{ background: 'var(--glass-soft)', border: '1px solid var(--line)' }}>
             <TrendingUp size={16} color="#0b8f77" />
             Fintrix Intelligence Suite
-          </div>
-          <h1 className="mt-10 text-6xl max-w-lg leading-[0.98]">Finance clarity for fast decisions.</h1>
-          <p className="mt-6 max-w-lg text-lg text-muted leading-relaxed">
+          </motion.div>
+          <motion.h1 variants={fadeUp} className="mt-10 text-6xl max-w-lg leading-[0.98]">Finance clarity for fast decisions.</motion.h1>
+          <motion.p variants={fadeUp} className="mt-6 max-w-lg text-lg text-muted leading-relaxed">
             Track every rupee, monitor spending behavior, and build confident forecasts with a dashboard that feels premium and precise.
-          </p>
-        </div>
-        <div className="relative z-10 panel-strong max-w-lg p-7">
+          </motion.p>
+        </motion.div>
+        <motion.div variants={fadeUp} className="relative z-10 panel-strong max-w-lg p-7">
           <p className="text-sm font-semibold tracking-wide">Why teams pick Fintrix</p>
-          <ul className="mt-3 space-y-2 text-sm text-muted leading-relaxed">
-            <li>Instant role-based access for finance teams</li>
-            <li>Readable analytics with AI-driven commentary</li>
-            <li>Fast record management with audit-friendly flow</li>
-          </ul>
-        </div>
-      </section>
+          <motion.ul variants={stagger} initial="hidden" animate="visible" className="mt-3 space-y-2 text-sm text-muted leading-relaxed">
+            {[
+              'Instant role-based access for finance teams',
+              'Readable analytics with AI-driven commentary',
+              'Fast record management with audit-friendly flow',
+            ].map((item) => (
+              <motion.li key={item} variants={fadeUp}>{item}</motion.li>
+            ))}
+          </motion.ul>
+        </motion.div>
+      </motion.section>
 
       <section className="flex items-center justify-center p-4 sm:p-8">
       <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 26, scale: 0.985 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
         className="w-full max-w-md panel-strong p-8 sm:p-10 space-y-6"
       >
         <div className="space-y-2">
