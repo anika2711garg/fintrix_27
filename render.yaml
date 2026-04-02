@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: fintrix
+    env: node
+    plan: free
+    buildCommand: npm install && node ./node_modules/vite/bin/vite.js build
+    startCommand: npm start
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_EXPIRE
+        value: 24h
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: VITE_API_BASE_URL
+        sync: false

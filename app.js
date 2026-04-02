@@ -3,6 +3,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
+const fs = require('fs');
 
 // Route files
 const authRoutes = require('./routes/authRoutes');
@@ -75,10 +77,23 @@ const { swaggerUi, specs } = require('./utils/swagger');
 // Mount Swagger
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
-// Root route
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to the Finance Backend API' });
+// Health route for uptime checks
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ success: true, message: 'API is healthy' });
 });
+
+// Serve frontend build when available (Render single-service deployment)
+const distPath = path.join(__dirname, 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get(/^\/(?!api|api-docs).*/, (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.json({ message: 'Welcome to the Finance Backend API' });
+  });
+}
 
 const AppError = require('./utils/AppError');
 

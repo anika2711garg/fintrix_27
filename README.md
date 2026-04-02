@@ -203,3 +203,41 @@ After deploy:
 - Frontend: `https://your-project.vercel.app`
 - Backend API: `https://your-project.vercel.app/api/...`
 - Swagger: `https://your-project.vercel.app/api-docs`
+
+### Deployment Troubleshooting
+- If build fails with `sh: 1: vite: Permission denied`:
+    - This project already uses a safe build script: `node ./node_modules/vite/bin/vite.js build`.
+    - Vite and required build tools are kept in `dependencies` (not only `devDependencies`) for production installs.
+    - For container-based deployments, keep `node_modules` out of build context (`.dockerignore` included).
+
+## One-Go Render Deployment (Frontend + Backend)
+
+This repository is configured to run on Render as a single Node web service:
+- Backend APIs are served from Express (`/api/*`).
+- Swagger is available at `/api-docs`.
+- Frontend static build (`dist`) is served by Express at `/`.
+
+### Option A: Blueprint Deploy (recommended)
+- Use `render.yaml` from this repo.
+
+### Option B: Manual Render Service Settings
+- Environment: `Node`
+- Build Command: `npm install && node ./node_modules/vite/bin/vite.js build`
+- Start Command: `npm start`
+
+### Required Environment Variables (Render)
+- `MONGODB_URI`
+- `JWT_SECRET`
+- `JWT_EXPIRE=24h`
+- `NODE_ENV=production`
+
+### CORS and Frontend API Base on Render
+- If frontend and backend are on the same Render service/domain:
+    - `VITE_API_BASE_URL` can be left empty (client uses `/api`).
+    - Set `CORS_ORIGIN` to your Render app URL.
+- If frontend and backend are on different domains:
+    - Set `VITE_API_BASE_URL` to backend base URL.
+    - Set `CORS_ORIGIN` to frontend URL.
+
+### Health Check
+- API health endpoint: `/api/health`
